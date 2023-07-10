@@ -1,4 +1,5 @@
 import argparse
+import logging
 import os
 import sys
 
@@ -8,12 +9,17 @@ curPath = os.path.abspath(os.path.dirname(__file__))
 rootPath = os.path.split(curPath)[0]
 sys.path.append(rootPath)
 
-from oslui.prompts import TRANSLATE_PROMPT, CHAT_PROMPT
-from oslui.command import LanguageCommand, ShellCommand
+from oslui.utils import get_environment_variable
 from oslui.agent import TranslateAgent, QueryAgent, ChatAgent
+from oslui.command import LanguageCommand, ShellCommand
+from oslui.prompts import TRANSLATE_PROMPT, CHAT_PROMPT
 
 
 def main():
+    console_handler = logging.StreamHandler()
+    console_handler.setLevel(logging.WARNING)
+    logging.getLogger('').addHandler(console_handler)
+
     parser = argparse.ArgumentParser(
         description="Natural Language User Interface for Operating Systems")
     parser.add_argument("language_command", help="Natural language command")
@@ -23,7 +29,13 @@ def main():
                         required=False, help="Chat to GPT")
     args = parser.parse_args()
 
-    llm = OpenAI(temperature=0)
+    try:
+        openai_api_key = get_environment_variable("OPENAI_API_KEY")
+    except Exception as e:
+        logging.error(str(e))
+        exit(1)
+
+    llm = OpenAI(temperature=0, openai_api_key=openai_api_key)
 
     if args.gpt:
         chat_agent = ChatAgent(llm, CHAT_PROMPT)
