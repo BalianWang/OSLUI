@@ -2,8 +2,6 @@ from abc import ABC, abstractmethod
 from enum import Enum
 from typing import Union
 
-from langchain.memory import ChatMessageHistory
-
 
 class MemoryDataType(Enum):
     UNKNOWN = 1
@@ -42,7 +40,7 @@ class BaseMemoryData(ABC):
         BaseMemoryData: memory data base class
     """
 
-    def __init__(self, date_type: MemorySourceType, data: Union[str, ChatMessageHistory]):
+    def __init__(self, date_type: MemorySourceType, data: Union[str]):
         self.date_type = date_type
         self.data = data
 

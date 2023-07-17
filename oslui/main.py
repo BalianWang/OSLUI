@@ -3,16 +3,15 @@ import logging
 import os
 import sys
 
-from langchain.llms import OpenAI
+import guidance
 
 curPath = os.path.abspath(os.path.dirname(__file__))
 rootPath = os.path.split(curPath)[0]
 sys.path.append(rootPath)
 
-from oslui.utils import get_environment_variable
-from oslui.agent import TranslateAgent, QueryAgent, ChatAgent
+from oslui.utils import get_environment_variable, get_os_type, get_language_type
+from oslui.agent import TranslateAgent, ChatAgent
 from oslui.command import LanguageCommand, ShellCommand
-from oslui.prompts import TRANSLATE_PROMPT, CHAT_PROMPT
 
 
 def main():
@@ -35,20 +34,31 @@ def main():
         logging.error(str(e))
         exit(1)
 
-    llm = OpenAI(temperature=0, openai_api_key=openai_api_key)
+    llm = guidance.llms.OpenAI(model="gpt-3.5-turbo", api_key=openai_api_key)
 
     if args.gpt:
-        chat_agent = ChatAgent(llm, CHAT_PROMPT)
-        result = chat_agent.run(args.language_command)
-        print(result)
+        chat_agent = ChatAgent(llm)
+        try:
+            language_type = get_language_type(args.language_command)
+            params = {"language_type": language_type, "query": args.language_command}
+            chat_agent.run(params)
+        except Exception as exc:
+            print(exc)
+            exit(1)
+        print(chat_agent.result.answer)
     elif args.query:
-        query_agent = QueryAgent(llm)
-        result = query_agent.run(args.language_command)
-        print(result)
+        pass
     else:
-        trans_agent = TranslateAgent(llm, TRANSLATE_PROMPT)
+        trans_agent = TranslateAgent(llm)
         lang_cmd = LanguageCommand(args.language_command)
-        sh_cmd = ShellCommand(trans_agent.run(lang_cmd.content))
+        try:
+            os_type = get_os_type()
+            params = {"os_type": os_type, "needs": lang_cmd.content}
+            trans_agent.run(params)
+        except Exception as exc:
+            print(exc)
+            exit(1)
+        sh_cmd = ShellCommand(trans_agent.result.shell_cmd)
         sh_cmd.modify()
         sh_cmd.run()
 

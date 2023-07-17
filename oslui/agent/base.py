@@ -1,7 +1,8 @@
 from abc import ABC, abstractmethod
+from typing import Any
 
-from langchain.llms.base import BaseLLM
-from langchain.prompts import PromptTemplate
+import guidance
+from guidance.llms import LLM
 
 
 class BaseAgent(ABC):
@@ -9,11 +10,11 @@ class BaseAgent(ABC):
         BaseAgent: OS Agent base class
     """
 
-    def __init__(self, llm: BaseLLM, prompt: PromptTemplate = None, memory: PromptTemplate = None):
+    def __init__(self, llm: LLM, prompt: str = None):
         self.llm = llm
         self.prompt = prompt
-        self.memory = memory
+        self.program = guidance(template=prompt, llm=llm)
 
     @abstractmethod
-    def run(self, input_msg: str) -> str:
+    def run(self, params: dict[str, Any]):
         pass

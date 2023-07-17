@@ -1,19 +1,37 @@
-from langchain.prompts import PromptTemplate
+from pydantic import BaseModel
 
-chat_tmp = \
-    """Assistant is a large language model trained by OpenAI.
+CHAT_PROMPT = \
+    """
+    {{#system~}}
+    You are a helpful assistant.
+    {{~/system}}
+    
+    {{#user~}}
+    I want a response to the following question:
+    {{query}}
+    Name 3 world-class experts (past or present) who would be great at answering this?
+    Don't answer the question yet.
+    {{~/user}}
+    
+    {{#assistant~}}
+    {{gen 'expert_names' temperature=0 max_tokens=300}}
+    {{~/assistant}}
+    
+    {{#user~}}
+    Great, now please answer the question as if these experts had collaborated in writing a joint anonymous answer.
+    Please use {{language_type}} as detailed as possible.
+    {{~/user}}
+    
+    {{#assistant~}}
+    {{gen 'answer' temperature=0}}
+    {{~/assistant}}
+    """
 
-    Assistant is designed to be able to assist with a wide range of tasks, from answering simple questions to providing in-depth explanations and discussions on a wide range of topics. As a language model, Assistant is able to generate human-like text based on the input it receives, allowing it to engage in natural-sounding conversations and provide responses that are coherent and relevant to the topic at hand.
 
-    Assistant is constantly learning and improving, and its capabilities are constantly evolving. It is able to process and understand large amounts of text, and can use this knowledge to provide accurate and informative responses to a wide range of questions. Additionally, Assistant is able to generate its own text based on the input it receives, allowing it to engage in discussions and provide explanations and descriptions on a wide range of topics.
+class ChatInput(BaseModel):
+    query: str
+    language_type: str
 
-    Overall, Assistant is a powerful tool that can help with a wide range of tasks and provide valuable insights and information on a wide range of topics. Whether you need help with a specific question or just want to have a conversation about a particular topic, Assistant is here to assist.
 
-    {history}
-    Human: {human_input}
-    Assistant:"""
-
-CHAT_PROMPT = PromptTemplate(
-    input_variables=["history", "human_input"],
-    template=chat_tmp,
-)
+class ChatOutput(BaseModel):
+    answer: str

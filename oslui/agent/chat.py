@@ -1,19 +1,45 @@
-from langchain.chains import LLMChain
-from langchain.llms.base import BaseLLM
-from langchain.prompts import PromptTemplate
+from typing import Any
+
+from guidance.llms import LLM
+from pydantic import ValidationError
 
 from oslui.agent.base import BaseAgent
+from oslui.prompts import ChatOutput, ChatInput, CHAT_PROMPT
 
 
 class ChatAgent(BaseAgent):
     """
         TranslateAgent: translate natural language command to shell command
     """
-    chain: LLMChain = None
+    params: ChatInput = None
+    result: ChatOutput = None
 
-    def __init__(self, llm: BaseLLM, prompt: PromptTemplate = None, memory: PromptTemplate = None):
-        super().__init__(llm, prompt, memory)
-        self.chain = LLMChain(llm=llm, prompt=prompt)
+    def __init__(self, llm: LLM):
+        super().__init__(llm=llm, prompt=CHAT_PROMPT)
 
-    def run(self, input_msg: str) -> str:
-        return self.chain.predict(human_input=input_msg, history="")
+    def run(self, params_dict: dict[str, Any]):
+        try:
+            self.params = ChatInput(**params_dict)
+        except ValidationError as exc:
+            add_info = "Parameters verification failed before generating chat answer"
+            new_exc = Exception(f"Error occurred: {add_info}")
+            new_exc.__cause__ = exc
+            raise new_exc
+
+        output_dict = {}
+        try:
+            output = self.program(language_type=self.params.language_type, query=self.params.query)
+            output_dict["answer"] = output["answer"]
+        except Exception as exc:
+            add_info = "Something wrong when generating chat answer"
+            new_exc = Exception(f"Error occurred: {add_info}")
+            new_exc.__cause__ = exc
+            raise new_exc
+
+        try:
+            self.result = ChatOutput(**output_dict)
+        except ValidationError as exc:
+            add_info = "Generated chat answer are not as expected"
+            new_exc = Exception(f"Error occurred: {add_info}")
+            new_exc.__cause__ = exc
+            raise new_exc
