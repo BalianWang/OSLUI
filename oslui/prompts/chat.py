@@ -1,37 +1,54 @@
+from typing import Any, List
+
 from pydantic import BaseModel
 
-CHAT_PROMPT = \
-    """
-    {{#system~}}
-    You are a helpful assistant.
-    {{~/system}}
-    
-    {{#user~}}
-    I want a response to the following question:
-    {{query}}
-    Name 3 world-class experts (past or present) who would be great at answering this?
-    Don't answer the question yet.
-    {{~/user}}
-    
-    {{#assistant~}}
-    {{gen 'expert_names' temperature=0 max_tokens=300}}
-    {{~/assistant}}
-    
-    {{#user~}}
-    Great, now please answer the question as if these experts had collaborated in writing a joint anonymous answer.
-    Please use {{language_type}} as detailed as possible.
-    {{~/user}}
-    
-    {{#assistant~}}
-    {{gen 'answer' temperature=0}}
-    {{~/assistant}}
-    """
+from oslui.prompts import BasePrompt, DataCell, RoleType
+
+system_cell = DataCell(
+    role=RoleType.SYSTEM,
+    content="You are a helpful assistant, and you are the world-class best expert to anser user's question."
+            "Please use {lang_type} answer questions as detaild as possible.",
+    activated=False
+)
+
+user_cell = DataCell(
+    role=RoleType.USER,
+    content="Question:{question}"
+)
 
 
 class ChatInput(BaseModel):
-    query: str
-    language_type: str
+    question: str
+    lang_type: str
 
 
-class ChatOutput(BaseModel):
-    answer: str
+class ChatPrompt(BasePrompt):
+    params: ChatInput = None
+
+    def __init__(self):
+        super().__init__(chat_cell_list)
+
+    def fill_params(self, params: dict[str, Any]):
+        try:
+            self.params = ChatInput(**params)
+        except ValidationError as exc:
+            add_info = "Parameters verification failed when completing the chat prompt"
+            new_exc = Exception(f"Error occurred: {add_info}")
+            new_exc.__cause__ = exc
+            raise new_exc
+
+        for cell in self.cell_list:
+            cell.activate(params)
+
+        self.ready = True
+
+    def append(self, cell: DataCell):
+        self.cell_list.append(cell)
+        if cell.temperature != 0:
+            self.temperature = cell.temperature
+        if cell.max_tokens:
+            self.max_tokens = cell.max_tokens
+
+    def prompt(self) -> List[dict[str, str]]:
+        return [cell.__dict__() for cell in self.cell_list]
+

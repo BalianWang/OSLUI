@@ -57,3 +57,4 @@ class TranslatePrompt(BasePrompt):
 
     def prompt(self) -> List[dict[str, str]]:
         return [cell.__dict__() for cell in self.cell_list]
+

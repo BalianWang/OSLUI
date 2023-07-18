@@ -8,7 +8,7 @@ rootPath = os.path.split(curPath)[0]
 sys.path.append(rootPath)
 
 from oslui.utils import get_environment_variable, get_os_type
-from oslui.agent import TranslateAgent
+from oslui.agent import TranslateAgent, ChatAgent
 from oslui.command import LanguageCommand
 from oslui.llms import OpenAI
 
@@ -37,19 +37,15 @@ def main():
     llm = OpenAI(model="gpt-3.5-turbo", key=openai_api_key)
 
     if args.gpt:
-        """
         chat_agent = ChatAgent(llm)
         try:
-            language_type = get_language_type(args.language_command)
-            params = {"language_type": language_type, "query": args.language_command}
+            lang_type = get_language_type(args.language_command)
+            params = {"lang_type": lang_type, "question": args.language_command}
             chat_agent.run(params)
         except Exception as exc:
             print(exc)
             exit(1)
         print(chat_agent.result.answer)
-        """
-    elif args.query:
-        pass
     else:
         trans_agent = TranslateAgent(llm)
         lang_cmd = LanguageCommand(args.language_command)
