@@ -3,15 +3,14 @@ import logging
 import os
 import sys
 
-import guidance
-
 curPath = os.path.abspath(os.path.dirname(__file__))
 rootPath = os.path.split(curPath)[0]
 sys.path.append(rootPath)
 
-from oslui.utils import get_environment_variable, get_os_type, get_language_type
-from oslui.agent import TranslateAgent, ChatAgent
-from oslui.command import LanguageCommand, ShellCommand
+from oslui.utils import get_environment_variable, get_os_type
+from oslui.agent import TranslateAgent
+from oslui.command import LanguageCommand
+from oslui.llms import OpenAI
 
 
 def main():
@@ -26,6 +25,7 @@ def main():
                         required=False, help="Query something")
     parser.add_argument("-g", "--gpt", action="store_true",
                         required=False, help="Chat to GPT")
+
     args = parser.parse_args()
 
     try:
@@ -34,9 +34,10 @@ def main():
         logging.error(str(e))
         exit(1)
 
-    llm = guidance.llms.OpenAI(model="gpt-3.5-turbo", api_key=openai_api_key)
+    llm = OpenAI(model="gpt-3.5-turbo", key=openai_api_key)
 
     if args.gpt:
+        """
         chat_agent = ChatAgent(llm)
         try:
             language_type = get_language_type(args.language_command)
@@ -46,6 +47,7 @@ def main():
             print(exc)
             exit(1)
         print(chat_agent.result.answer)
+        """
     elif args.query:
         pass
     else:
@@ -53,14 +55,17 @@ def main():
         lang_cmd = LanguageCommand(args.language_command)
         try:
             os_type = get_os_type()
-            params = {"os_type": os_type, "needs": lang_cmd.content}
-            trans_agent.run(params)
+            params = {"os_type": os_type, "lang_cmd": lang_cmd.content}
+            print(trans_agent.run(params))
         except Exception as exc:
             print(exc)
             exit(1)
+
+        """
         sh_cmd = ShellCommand(trans_agent.result.shell_cmd)
         sh_cmd.modify()
         sh_cmd.run()
+        """
 
 
 if __name__ == "__main__":

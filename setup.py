@@ -10,7 +10,6 @@ setup(
     packages=find_packages(),
     install_requires=[
         'openai',
-        'guidance',
         'google-search-results',
     ],
     entry_points={

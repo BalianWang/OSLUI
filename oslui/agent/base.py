@@ -1,8 +1,8 @@
 from abc import ABC, abstractmethod
 from typing import Any
 
-import guidance
-from guidance.llms import LLM
+from oslui.llms import BaseLLM
+from oslui.prompts import BasePrompt
 
 
 class BaseAgent(ABC):
@@ -10,10 +10,9 @@ class BaseAgent(ABC):
         BaseAgent: OS Agent base class
     """
 
-    def __init__(self, llm: LLM, prompt: str = None):
+    def __init__(self, llm: BaseLLM, prompt: BasePrompt):
         self.llm = llm
         self.prompt = prompt
-        self.program = guidance(template=prompt, llm=llm)
 
     @abstractmethod
     def run(self, params: dict[str, Any]):
