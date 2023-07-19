@@ -17,10 +17,17 @@ class ChatAgent(BaseAgent):
         try:
             self.prompt.fill_params(params)
         except Exception as exc:
-            add_info = "Parameters complete failed before answer chat question"
+            add_info = "Parameters complete failed before answering chat question"
             new_exc = Exception(f"Error occurred: {add_info}")
             new_exc.__cause__ = exc
             raise new_exc
 
-        result = self.llm.infer(self.prompt)
-        print(result)
+        try:
+            response = self.llm.infer(self.prompt)
+        except Exception as exc:
+            add_info = "Something wrong when answering chat question"
+            new_exc = Exception(f"Error occurred: {add_info}")
+            new_exc.__cause__ = exc
+            raise new_exc
+
+        return response

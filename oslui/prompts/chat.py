@@ -1,20 +1,29 @@
 from typing import Any, List
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ValidationError
 
 from oslui.prompts import BasePrompt, DataCell, RoleType
 
-system_cell = DataCell(
+chat_system_cell = DataCell(
     role=RoleType.SYSTEM,
-    content="You are a helpful assistant, and you are the world-class best expert to anser user's question."
-            "Please use {lang_type} answer questions as detaild as possible.",
+    content="You are a helpful assistant, and you are the best expert to answer user's question."
+            "It is recommended to use markdown syntax when necessary."
+            "Please use {lang_type} answer questions as detail as possible.",
     activated=False
 )
 
-user_cell = DataCell(
+chat_user_cell = DataCell(
     role=RoleType.USER,
-    content="Question:{question}"
+    content="Question:{question}",
+    activated=False
 )
+
+chat_assistant_cell = DataCell(
+    role=RoleType.ASSISTANT,
+    content="Detailed answer to the previous question"
+)
+
+chat_cell_list = [chat_system_cell, chat_user_cell]
 
 
 class ChatInput(BaseModel):
@@ -27,6 +36,7 @@ class ChatPrompt(BasePrompt):
 
     def __init__(self):
         super().__init__(chat_cell_list)
+        self.stream = True
 
     def fill_params(self, params: dict[str, Any]):
         try:
@@ -51,4 +61,3 @@ class ChatPrompt(BasePrompt):
 
     def prompt(self) -> List[dict[str, str]]:
         return [cell.__dict__() for cell in self.cell_list]
-

@@ -17,6 +17,7 @@ class OpenAI(BaseLLM):
             messages=prompt.prompt(),
             temperature=prompt.temperature,
             max_tokens=prompt.max_tokens,
+            stream=prompt.stream,
         )
 
         return response

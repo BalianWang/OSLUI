@@ -12,12 +12,13 @@ class RoleType(Enum):
 
 class DataCell(object):
     def __init__(self, role: RoleType, content: str, max_tokens: int = None, temperature: float = 0,
-                 activated: bool = True):
+                 activated: bool = True, stream: bool = False):
         self.role = role
         self.content = content
         self.max_tokens = max_tokens
         self.temperature = temperature
         self.activated = activated
+        self.stream = stream
 
     def __dict__(self):
         if not self.activated:
@@ -39,6 +40,7 @@ class BasePrompt(ABC):
     ready: bool = False
     temperature: float = 0
     max_tokens: int = None
+    stream: bool = False
 
     def __init__(self, cell_list: List[DataCell]):
         self.cell_list = cell_list

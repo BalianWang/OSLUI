@@ -4,7 +4,7 @@ from pydantic import BaseModel, ValidationError
 
 from oslui.prompts import BasePrompt, DataCell, RoleType
 
-system_cell = DataCell(
+trans_system_cell = DataCell(
     role=RoleType.SYSTEM,
     content="You are an excellent computer expert, computer OS type is {os_type}."
             "Please generate shell commands that meet user needs"
@@ -14,13 +14,13 @@ system_cell = DataCell(
     activated=False
 )
 
-user_cell = DataCell(
+trans_user_cell = DataCell(
     role=RoleType.USER,
     content="Needs:{lang_cmd}",
     activated=False
 )
 
-translate_cell_list = [system_cell, user_cell]
+translate_cell_list = [trans_system_cell, trans_user_cell]
 
 
 class TranslateInput(BaseModel):
@@ -57,4 +57,3 @@ class TranslatePrompt(BasePrompt):
 
     def prompt(self) -> List[dict[str, str]]:
         return [cell.__dict__() for cell in self.cell_list]
-
