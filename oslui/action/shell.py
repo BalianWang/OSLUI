@@ -1,7 +1,7 @@
 import readline
 import subprocess
 
-from oslui.command.base import BaseCommand
+from oslui.action.base import BaseCommand
 
 
 class ShellCommand(BaseCommand):
@@ -21,5 +21,5 @@ class ShellCommand(BaseCommand):
         readline.set_startup_hook(startup_hook)
         self.content = input()
 
-    def run(self):
-        subprocess.run(self.content, shell=True)
+    def execute(self):
+        return subprocess.run(self.content, shell=True)

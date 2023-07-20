@@ -8,3 +8,7 @@ class BaseCommand(ABC):
 
     def __init__(self, content: str):
         self.content = content
+
+    @abstractmethod
+    def execute(self):
+        pass
