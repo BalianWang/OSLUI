@@ -8,7 +8,7 @@ rootPath = os.path.split(curPath)[0]
 sys.path.append(rootPath)
 
 from oslui.utils import get_environment_variable, get_os_type
-from oslui.agent import TranslateAgent, ChatAgent
+from oslui.agent import TranslateAgent, ChatAgent, ClassifierAgent
 from oslui.action import ShellCommand
 from oslui.llms import OpenAI
 from oslui.tui import ChatTUIType, ChatTUI
@@ -21,9 +21,9 @@ def main():
 
     parser = argparse.ArgumentParser(
         description="Natural Language User Interface for Operating Systems")
-    parser.add_argument("lang_cmd", nargs="?", default=None, help="Natural language command")
-    parser.add_argument("-c", "--chat", action="store_true",
-                        required=False, help="Chat, communicate or consult something")
+    parser.add_argument('lang_cmd', type=str, nargs='*', help="Natural language command")
+    parser.add_argument("-i", "--immerse", action="store_true",
+                        required=False, help="Immerse mode")
     parser.add_argument("-d", "--debug", action="store_true",
                         required=False, help="Debug for your confusing questions")
 
@@ -37,19 +37,14 @@ def main():
 
     llm = OpenAI(model="gpt-3.5-turbo", key=openai_api_key)
 
-    selected_count = sum([1 for arg in [args.chat, args.debug] if arg])
+    selected_count = sum([1 for arg in [args.immerse, args.debug] if arg])
     if selected_count > 1:
-        parser.error("Parameter conflict: only one of -c or -d can be selected")
+        parser.error("Parameter conflict: only one of -i or -d can be selected")
 
-    if args.chat:
-        if args.lang_cmd:
-            chat_agent = ChatAgent(llm)
-            tui = ChatTUI(chat_agent)
-            tui.show(args.lang_cmd)
-        else:
-            chat_agent = ChatAgent(llm)
-            tui = ChatTUI(chat_agent, tui_type=ChatTUIType.CONTINUOUS)
-            tui.show()
+    if args.immerse:
+        chat_agent = ChatAgent(llm)
+        tui = ChatTUI(chat_agent, tui_type=ChatTUIType.CONTINUOUS)
+        tui.show()
     elif args.debug:
         if args.lang_cmd:
             chat_agent = ChatAgent(llm)
@@ -60,21 +55,31 @@ def main():
             tui = ChatTUI(chat_agent, tui_type=ChatTUIType.CONTINUOUS)
             tui.show()
     else:
-        if args.lang_cmd:
-            trans_agent = TranslateAgent(llm)
-            try:
-                os_type = get_os_type()
-                params = {"os_type": os_type, "lang_cmd": args.lang_cmd}
-                result = trans_agent.run(params)
-            except Exception as exc:
-                print(exc)
-                exit(1)
+        lang_cmd = ' '.join(args.lang_cmd)
+        classifier = ClassifierAgent(llm)
+        try:
+            params = {"sentence": lang_cmd}
+            result = classifier.run(params)
+        except Exception as exc:
+            print(exc)
+            exit(1)
+        print(result)
 
-            sh_cmd = ShellCommand(result)
-            sh_cmd.modify()
-            sh_cmd.execute()
-        else:
-            pass
+
+        '''
+        trans_agent = TranslateAgent(llm)
+        try:
+            os_type = get_os_type()
+            params = {"os_type": os_type, "lang_cmd": lang_cmd}
+            result = trans_agent.run(params)
+        except Exception as exc:
+            print(exc)
+            exit(1)
+
+        sh_cmd = ShellCommand(result)
+        sh_cmd.modify()
+        sh_cmd.execute()
+        '''
 
 
 if __name__ == "__main__":

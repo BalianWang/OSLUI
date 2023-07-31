@@ -1,55 +1,95 @@
-import os
+import platform
 import subprocess
+import os
+import fcntl
+import select
+import winreg
 
-from prompt_toolkit import prompt
+from rich.console import Console
+from rich.prompt import Prompt
 
 
-def get_prompt():
-    # 获取用户名和主机名
-    username = os.getenv("USER") or os.getenv("USERNAME")
-    machine = os.uname().nodename
+def get_windows_default_shell_path():
+    try:
+        with winreg.OpenKey(winreg.HKEY_CURRENT_USER,
+                            r"Software\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders") as key:
+            value, _ = winreg.QueryValueEx(key, "!")
+            return value
+    except Exception as e:
+        print("Error while accessing registry:", e)
+        return None
 
-    # 获取当前工作目录
-    current_dir = os.getcwd()
 
-    # 构造提示信息
-    return f"{username}@{machine}: {current_dir} $ "
+def get_shell_type():
+    os_type = platform.system()
+
+    if os_type == "Windows":
+        default_shell_path = get_windows_default_shell_path()
+        if default_shell_path:
+            if "cmd" in default_shell_path.lower():
+                return "cmd"
+            elif "powershell" in default_shell_path.lower():
+                return "powershell"
+        return "cmd"
+    elif os_type == "Darwin" or os_type == "Linux":
+        return os.getenv("SHELL")
+
+
+def make_non_blocking(fd):
+    flags = fcntl.fcntl(fd, fcntl.F_GETFL)
+    fcntl.fcntl(fd, fcntl.F_SETFL, flags | os.O_NONBLOCK)
+
+
+def read_output(fd):
+    output_data = b""
+    while True:
+        ready, _, _ = select.select([fd], [], [], 0.1)
+        if not ready:
+            break
+        data = os.read(fd, 4096)
+        if not data:
+            break
+        output_data += data
+    return output_data.decode()
 
 
 def run_command(command):
-    # 创建一个子进程
+    console = Console()
+
     process = subprocess.Popen(command, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
                                stderr=subprocess.PIPE, text=True)
 
-    # 循环执行交互命令
+    make_non_blocking(process.stdout.fileno())
+    make_non_blocking(process.stderr.fileno())
+
+    stdout_data = read_output(process.stdout.fileno())
+    stderr_data = read_output(process.stderr.fileno())
+    console.print(stdout_data, stderr_data, end="")
+
+    username = os.getenv("USER") or os.getenv("USERNAME")
+    current_dir = os.getcwd()
+
     while True:
-        # 读取用户输入的命令
-        user_input = prompt(get_prompt())
+        command = Prompt.ask(f"{username}@OSLUI:{current_dir}$ ")
 
-        # 如果用户输入 'exit'，则退出循环
-        if user_input.lower() == 'exit':
+        if command.lower() in ["exit", "quit", "q"]:
             break
-
-        # 检查是否输入了 cd 命令
-        if user_input.startswith("cd "):
-            new_directory = user_input[3:].strip()
-            try:
-                # 改变当前目录
-                os.chdir(new_directory)
-            except FileNotFoundError:
-                print("Directory not found.")
+        elif command == "clear":
+            console.clear()
             continue
 
-        # 将命令写入子进程的stdin
-        process.stdin.write(user_input + "\n")
+        process.stdin.write(command + "\n")
         process.stdin.flush()
 
-        # 读取并显示命令执行结果
-        stdout, stderr = process.communicate()
-        print(stdout, end="")
-        print(stderr, end="")
+        stdout_data = read_output(process.stdout.fileno())
+        stderr_data = read_output(process.stderr.fileno())
+        console.print(stdout_data, stderr_data, end="")
 
-    # 关闭子进程
+        if command.startwith("cd"):
+            process.stdin.write("cd\n")
+            process.stdin.flush()
+            current_dir = read_output(process.stdout.fileno())
+
     process.stdin.close()
     process.wait()
 
