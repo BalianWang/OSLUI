@@ -1,5 +1,6 @@
 from datetime import datetime
 from enum import Enum
+from typing import Any
 
 from rich.console import Console
 from rich.live import Live
@@ -32,7 +33,9 @@ class ChatTUI(BaseTUI):
     def show(self, input_msg: str = None):
         if self.tui_type == ChatTUIType.SINGLE:
             self.input_msg = input_msg
-            self.dynamic_refresh()
+            lang_type = get_language_type(self.input_msg)
+            params = {"lang_type": lang_type, "question": self.input_msg}
+            self.dynamic_refresh(params)
         elif self.tui_type == ChatTUIType.CONTINUOUS:
             console = Console()
             console.clear()
@@ -53,7 +56,9 @@ class ChatTUI(BaseTUI):
                         timestamp = datetime.now().strftime("[%H:%M:%S]")
                         timestamp_text = Text(timestamp, style="green")
                         console.print(timestamp_text + " OSLUI :", style="bold green")
-                        self.dynamic_refresh()
+                        lang_type = get_language_type(self.input_msg)
+                        params = {"lang_type": lang_type, "question": self.input_msg}
+                        self.dynamic_refresh(params)
                         self.agent.prompt.append(chat_assistant_cell)
                         self.agent.prompt.append(DataCell(
                             role=RoleType.USER,
@@ -63,10 +68,8 @@ class ChatTUI(BaseTUI):
             except KeyboardInterrupt:
                 pass
 
-    def dynamic_refresh(self):
+    def dynamic_refresh(self, params: dict[str, Any] = None):
         try:
-            lang_type = get_language_type(self.input_msg)
-            params = {"lang_type": lang_type, "question": self.input_msg}
             result, buffer_str = "", ""
             buffer = []
             with Live(vertical_overflow="visible") as live:

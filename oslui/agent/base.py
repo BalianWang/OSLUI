@@ -15,5 +15,5 @@ class BaseAgent(ABC):
         self.prompt = prompt
 
     @abstractmethod
-    def run(self, params: dict[str, Any]):
+    def run(self, params: dict[str, Any] = None):
         pass

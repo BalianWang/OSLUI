@@ -7,18 +7,15 @@ from oslui.prompts import BasePrompt, DataCell, RoleType
 classifier_system_cell = DataCell(
     role=RoleType.SYSTEM,
     content="Please identify which of the following intent the given sentence belongs to."
-            "And reply the sequence number before the corresponding intent."
-            "1 Execute shell commands on the computer"
-            "2 Asking a question that you are sure you can answer"
-            "3 Asking a question that you need external toos or data to answer"
-            "4 A large task needs tp be split and completed step by step"
-            "5 Others"
+            "And reply the sequence number(only number) before the corresponding intent."
             "##"
-            "Sentence:create a new git branch named develop"
-            "1"
+            "If want to perform tasks on computer:"
+            "1 Execute a simple shell command"
+            "2 Need to write code or execute complex shell program"
             "##"
-            "Sentence:the latest versions and features of Python"
-            "3",
+            "If want to ask questions:"
+            "3 Asking a question that only pre-2021 knowledge required"
+            "4 Asking a question that needs the latest data",
     activated=False
 )
 

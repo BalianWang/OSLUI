@@ -13,7 +13,7 @@ class ChatAgent(BaseAgent):
     def __init__(self, llm: BaseLLM):
         super().__init__(llm=llm, prompt=ChatPrompt())
 
-    def run(self, params: dict[str, Any]):
+    def run(self, params: dict[str, Any] = None):
         try:
             self.prompt.fill_params(params)
         except Exception as exc:

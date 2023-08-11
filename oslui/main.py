@@ -8,10 +8,10 @@ rootPath = os.path.split(curPath)[0]
 sys.path.append(rootPath)
 
 from oslui.utils import get_environment_variable, get_os_type
-from oslui.agent import TranslateAgent, ChatAgent, ClassifierAgent
+from oslui.agent import TranslateAgent, ChatAgent, ClassifierAgent, IntentType, DebugAgent
 from oslui.action import ShellCommand
 from oslui.llms import OpenAI
-from oslui.tui import ChatTUIType, ChatTUI
+from oslui.tui import ChatTUIType, ChatTUI, DebugTUI
 
 
 def main():
@@ -46,40 +46,36 @@ def main():
         tui = ChatTUI(chat_agent, tui_type=ChatTUIType.CONTINUOUS)
         tui.show()
     elif args.debug:
-        if args.lang_cmd:
-            chat_agent = ChatAgent(llm)
-            tui = ChatTUI(chat_agent)
-            tui.show(args.lang_cmd)
-        else:
-            chat_agent = ChatAgent(llm)
-            tui = ChatTUI(chat_agent, tui_type=ChatTUIType.CONTINUOUS)
-            tui.show()
+        debug_agent = DebugAgent(llm)
+        tui = DebugTUI(debug_agent)
+        tui.show()
     else:
         lang_cmd = ' '.join(args.lang_cmd)
         classifier = ClassifierAgent(llm)
         try:
             params = {"sentence": lang_cmd}
-            result = classifier.run(params)
-        except Exception as exc:
-            print(exc)
-            exit(1)
-        print(result)
-
-
-        '''
-        trans_agent = TranslateAgent(llm)
-        try:
-            os_type = get_os_type()
-            params = {"os_type": os_type, "lang_cmd": lang_cmd}
-            result = trans_agent.run(params)
+            intent = classifier.run(params)
         except Exception as exc:
             print(exc)
             exit(1)
 
-        sh_cmd = ShellCommand(result)
-        sh_cmd.modify()
-        sh_cmd.execute()
-        '''
+        if intent == IntentType.SHELL or intent == IntentType.PROGRAM:
+            trans_agent = TranslateAgent(llm)
+            try:
+                os_type = get_os_type()
+                params = {"os_type": os_type, "lang_cmd": lang_cmd}
+                result = trans_agent.run(params)
+            except Exception as exc:
+                print(exc)
+                exit(1)
+
+            sh_cmd = ShellCommand(result)
+            sh_cmd.modify()
+            sh_cmd.execute()
+        elif intent == IntentType.IN_QUERY or intent == IntentType.OUT_QUERY:
+            chat_agent = ChatAgent(llm)
+            tui = ChatTUI(chat_agent)
+            tui.show(lang_cmd)
 
 
 if __name__ == "__main__":

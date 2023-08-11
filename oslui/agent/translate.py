@@ -13,7 +13,7 @@ class TranslateAgent(BaseAgent):
     def __init__(self, llm: BaseLLM):
         super().__init__(llm=llm, prompt=TranslatePrompt())
 
-    def run(self, params: dict[str, Any]) -> str:
+    def run(self, params: dict[str, Any] = None) -> str:
         try:
             self.prompt.fill_params(params)
         except Exception as exc:
