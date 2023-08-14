@@ -1,10 +1,15 @@
 terminal_id="$(tty)"
 tty_number=$(basename "$terminal_id")
-log_directory=~/.oslui
-log_file="$log_directory/command_log_$tty_number.txt"
+root_directory=~/.oslui
+log_directory="$root_directory/command_log"
+log_file="$log_directory/$tty_number.log"
 last_recorded_command=""
 
 # Make sure the path and file exists
+if [ ! -d "$root_directory" ]; then
+  mkdir -p "$root_directory"
+fi
+
 if [ ! -d "$log_directory" ]; then
   mkdir -p "$log_directory"
 fi

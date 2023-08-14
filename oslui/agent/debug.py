@@ -24,28 +24,34 @@ class DebugAgent(BaseAgent):
     def get_command(self):
         tty_name = os.ttyname(0)
         tty_id = os.path.basename(tty_name)
-        print("tty id is : ", tty_id)
-        command_log = os.path.expanduser(f"~/.oslui/command_log_{tty_id}.txt")
+        command_log = os.path.expanduser(f"~/.oslui/command_log/{tty_id}.log")
         try:
             with open(command_log, 'r') as file:
                 lines = file.readlines()
                 if lines:
-                    self.command = lines[-1].strip()
+                    command_line = -1
+                    while True:
+                        command = lines[command_line].strip()
+                        if command == "oslui -d":
+                            command_line -= 1
+                            continue
+                        else:
+                            self.command = command
+                            break
         except FileNotFoundError:
             pass
 
     def get_error_msg(self):
         try:
-            result = subprocess.run(self.command, shell=True, check=True, text=True, capture_output=True)
+            result = subprocess.run(
+                self.command, shell=True, check=True, text=True, capture_output=True)
 
             # command executed unsuccessfully
             if result.returncode != 0:
                 self.error_msg = result.stderr
-                print("exec failed : "+result.stderr)
 
         except subprocess.CalledProcessError as e:
             self.error_msg = e.stderr
-            print("exec error : " + e.stderr)
 
     def get_os_type(self):
         self.os_type = get_os_type()
@@ -64,11 +70,9 @@ class DebugAgent(BaseAgent):
             exc = Exception("Could not get os type")
             raise exc
         self.params["command"] = self.command
-        self.params["error_msg"] = self.error_msg.replace('"', "'").replace('\n', ' ')
+        self.params["error_msg"] = self.error_msg.replace(
+            '"', "'").replace('\n', ' ')
         self.params["os_type"] = self.os_type
-        print(self.params)
-
-
 
     def run(self, params: dict[str, Any] = None):
         self.get_params()

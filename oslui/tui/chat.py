@@ -45,7 +45,8 @@ class ChatTUI(BaseTUI):
                 while True:
                     timestamp = datetime.now().strftime("[%H:%M:%S]")
                     timestamp_text = Text(timestamp, style="bright_blue")
-                    console.print(timestamp_text + " You :", style="bold bright_blue")
+                    console.print(timestamp_text + " You :",
+                                  style="bold bright_blue")
                     self.input_msg = console.input()
 
                     if not self.input_msg.strip():
@@ -55,9 +56,11 @@ class ChatTUI(BaseTUI):
                     else:
                         timestamp = datetime.now().strftime("[%H:%M:%S]")
                         timestamp_text = Text(timestamp, style="green")
-                        console.print(timestamp_text + " OSLUI :", style="bold green")
+                        console.print(timestamp_text + " OSLUI :",
+                                      style="bold green")
                         lang_type = get_language_type(self.input_msg)
-                        params = {"lang_type": lang_type, "question": self.input_msg}
+                        params = {"lang_type": lang_type,
+                                  "question": self.input_msg}
                         self.dynamic_refresh(params)
                         self.agent.prompt.append(chat_assistant_cell)
                         self.agent.prompt.append(DataCell(

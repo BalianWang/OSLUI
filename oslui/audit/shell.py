@@ -6,7 +6,8 @@ class ShellAuditor(BaseAuditor):
     def __init__(self):
         # 初始化一些审计规则
         super().__init__()
-        self.danger_keywords = ['rm', 'chmod', 'chown', '|', '&', '>', '>>', '<', 'eval', '`', '$(', ';']
+        self.danger_keywords = ['rm', 'chmod', 'chown',
+                                '|', '&', '>', '>>', '<', 'eval', '`', '$(', ';']
 
     def audit(self, command: ShellCommand):
         cmd_content = command.content

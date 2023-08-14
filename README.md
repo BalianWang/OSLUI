@@ -32,4 +32,3 @@ Users can interact with GPT through OSLUI(need to add "-g" parameter).
 - [ ] Support querying external data through OSLUI
 - [ ] Add a memory module to support OSLUI understand the context
 - [ ] Support plug-in mechanism
-

@@ -12,5 +12,3 @@ class BaseCommand(ABC):
     @abstractmethod
     def execute(self):
         pass
-
-
